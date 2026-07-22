@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #efece6; }
+  a { color: #8a5a2b; } a:hover { color: #6d4419; }
+</style>
+<script src="https://unpkg.com/three@0.147.0/build/three.min.js"></script>
+</helmet>
+<div style="height:100vh;display:flex;flex-direction:column;background:#efece6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#2b3440">
+  <div style="display:flex;align-items:center;gap:16px;padding:12px 20px;background:#f7f4ee;border-bottom:1px solid #ddd6c8;flex-wrap:wrap">
+    <div>
+      <div style="font-size:17px;font-weight:600;letter-spacing:0.2px">Buhardilla · Rediseños del espacio</div>
+      <div style="font-size:12.5px;color:#7a7264;margin-top:2px">Cuatro distribuciones: escritorios, TV + sofá y almacenaje</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-left:auto">
+      <button onClick="{{verPlanta}}" style="padding:8px 16px;border:1px solid #c9c2b2;border-radius:8px;font-size:13.5px;white-space:nowrap;cursor:pointer;background:{{tabPlantaBg}};color:{{tabPlantaColor}}">Plano de planta</button>
+      <button onClick="{{verCenital}}" style="padding:8px 16px;border:1px solid #c9c2b2;border-radius:8px;font-size:13.5px;white-space:nowrap;cursor:pointer;background:{{tabCenitalBg}};color:{{tabCenitalColor}}">Vista cenital</button>
+      <button onClick="{{ver3d}}" style="padding:8px 16px;border:1px solid #c9c2b2;border-radius:8px;font-size:13.5px;white-space:nowrap;cursor:pointer;background:{{tab3dBg}};color:{{tab3dColor}}">Vista 3D</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;padding:8px 20px;background:#efece6;border-bottom:1px solid #ddd6c8;font-size:12.5px;flex-wrap:wrap">
+    <span style="font-weight:600;color:#5a5248">Distribución:</span>
+    <button onClick="{{layA}}" style="padding:5px 12px;border:1px solid #c9c2b2;border-radius:7px;font-size:12px;white-space:nowrap;cursor:pointer;background:{{btnLABg}};color:{{btnLAColor}}">A · Actual</button>
+    <button onClick="{{layB}}" style="padding:5px 12px;border:1px solid #c9c2b2;border-radius:7px;font-size:12px;white-space:nowrap;cursor:pointer;background:{{btnLBBg}};color:{{btnLBColor}}">B · Estudio en isla</button>
+    <button onClick="{{layC}}" style="padding:5px 12px;border:1px solid #c9c2b2;border-radius:7px;font-size:12px;white-space:nowrap;cursor:pointer;background:{{btnLCBg}};color:{{btnLCColor}}">C · Cine simétrico</button>
+    <button onClick="{{layD}}" style="padding:5px 12px;border:1px solid #c9c2b2;border-radius:7px;font-size:12px;white-space:nowrap;cursor:pointer;background:{{btnLDBg}};color:{{btnLDColor}}">D · Salón bajo el Velux</button>
+    <span style="color:#7a7264">{{layDesc}}</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;padding:8px 20px;background:#efece6;border-bottom:1px solid #ddd6c8;font-size:12.5px;flex-wrap:wrap">
+    <span style="font-weight:600;color:#5a5248">Almacenamiento:</span>
+    <button onClick="{{almN}}" style="padding:5px 12px;border:1px solid #c9c2b2;border-radius:7px;font-size:12px;white-space:nowrap;cursor:pointer;background:{{btnMNBg}};color:{{btnMNColor}}">Ninguno</button>
+    <button onClick="{{almA}}" style="padding:5px 12px;border:1px solid #c9c2b2;border-radius:7px;font-size:12px;white-space:nowrap;cursor:pointer;background:{{btnMABg}};color:{{btnMAColor}}">A · Aparador foto 10</button>
+    <button onClick="{{almB}}" style="padding:5px 12px;border:1px solid #c9c2b2;border-radius:7px;font-size:12px;white-space:nowrap;cursor:pointer;background:{{btnMBBg}};color:{{btnMBColor}}">B · Banco arcón</button>
+    <button onClick="{{almC}}" style="padding:5px 12px;border:1px solid #c9c2b2;border-radius:7px;font-size:12px;white-space:nowrap;cursor:pointer;background:{{btnMCBg}};color:{{btnMCColor}}">C · Mixto A+B</button>
+  </div>
+  <div style="flex:1;position:relative;min-height:0">
+    <div ref="{{mount}}" data-screen-label="Visor 3D" style="position:absolute;inset:0"></div>
+    <div style="position:absolute;top:12px;left:50%;transform:translateX(-50%);font-size:13px;color:#7a7264;pointer-events:none">{{estadoCarga}}</div>
+    <div style="position:absolute;left:50%;transform:translateX(-50%);bottom:14px;background:rgba(43,52,64,0.75);color:#f2efe8;font-size:12.5px;padding:6px 14px;border-radius:999px;pointer-events:none;white-space:nowrap;display:{{hintDisplay}}">Arrastra para orbitar · rueda para acercar</div>
+    <div data-screen-label="Plano de planta" style="position:absolute;inset:0;overflow:auto;background:#efece6;display:{{planDisplay}};padding:18px;box-sizing:border-box">
+      <svg viewBox="-175 -145 940 1250" style="max-width:760px;width:100%;height:auto;margin:auto;background:#f9f6f0;border:1px solid #ddd6c8;border-radius:10px;display:block;flex:none">
+        <defs>
+          <marker id="mA" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#a34d2e"></path>
+          </marker>
+        </defs>
+        <rect x="0" y="0" width="640" height="798" fill="#fdfbf7" stroke="#2b3440" stroke-width="14"></rect>
+        <rect x="-9" y="119" width="18" height="90" fill="#ffffff" stroke="#2b3440" stroke-width="3"></rect>
+        <line x1="0" y1="119" x2="0" y2="209" stroke="#7aa0b0" stroke-width="2"></line>
+        <rect x="-9" y="589" width="18" height="90" fill="#ffffff" stroke="#2b3440" stroke-width="3"></rect>
+        <line x1="0" y1="589" x2="0" y2="679" stroke="#7aa0b0" stroke-width="2"></line>
+        <g fill="#ffffff" stroke="#7c7466" stroke-width="1.5">
+          <rect x="2" y="15" width="14" height="90"></rect>
+          <line x1="2" y1="38" x2="16" y2="38"></line>
+          <line x1="2" y1="60" x2="16" y2="60"></line>
+          <line x1="2" y1="82" x2="16" y2="82"></line>
+          <rect x="2" y="693" width="14" height="90"></rect>
+          <line x1="2" y1="716" x2="16" y2="716"></line>
+          <line x1="2" y1="738" x2="16" y2="738"></line>
+          <line x1="2" y1="760" x2="16" y2="760"></line>
+        </g>
+        <text transform="translate(30,60) rotate(-90)" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#6d675c">Radiador</text>
+        <text transform="translate(30,738) rotate(-90)" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#6d675c">Radiador</text>
+
+        <g style="display:{{planA}}">
+          <g style="display:{{bA_A}}" font-family="ui-monospace,monospace" font-size="12" fill="#6d675c">
+            <rect x="15" y="8" width="545" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="287" y="32" text-anchor="middle">Aparador 5,45</text>
+            <rect x="15" y="753" width="610" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="320" y="777" text-anchor="middle">Aparador 6,10</text>
+            <rect x="596" y="560" width="37" height="185" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <rect x="601" y="564" width="27" height="177" fill="none" stroke="#a8773f" stroke-width="1.5" stroke-dasharray="5 4"></rect>
+            <text transform="translate(619,652) rotate(-90)" text-anchor="middle">Ap. 1,85 + baldas</text>
+          </g>
+          <g style="display:{{bA_B}}" font-family="ui-monospace,monospace" font-size="12" fill="#6d675c">
+            <rect x="15" y="8" width="545" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="287" y="32" text-anchor="middle">Arcón 5,45</text>
+            <rect x="15" y="753" width="610" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="320" y="777" text-anchor="middle">Arcón 6,10</text>
+            <rect x="596" y="560" width="37" height="185" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <rect x="601" y="564" width="27" height="177" fill="none" stroke="#a8773f" stroke-width="1.5" stroke-dasharray="5 4"></rect>
+            <text transform="translate(619,652) rotate(-90)" text-anchor="middle">Arcón 1,85 + baldas</text>
+          </g>
+          <g style="display:{{bA_C}}" font-family="ui-monospace,monospace" font-size="12" fill="#6d675c">
+            <rect x="15" y="8" width="340" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="185" y="32" text-anchor="middle">Aparador 3,40</text>
+            <rect x="355" y="8" width="205" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="457" y="66" text-anchor="middle">Arcón 2,05</text>
+            <rect x="15" y="753" width="300" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="165" y="777" text-anchor="middle">Arcón 3,00</text>
+            <rect x="315" y="753" width="310" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="470" y="777" text-anchor="middle">Aparador 3,10</text>
+            <rect x="596" y="560" width="37" height="185" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <rect x="601" y="564" width="27" height="177" fill="none" stroke="#a8773f" stroke-width="1.5" stroke-dasharray="5 4"></rect>
+            <text transform="translate(619,652) rotate(-90)" text-anchor="middle">Arcón 1,85 + baldas</text>
+          </g>
+          <g stroke="#7c7466" stroke-width="2">
+            <rect x="158" y="507" width="140" height="140" rx="6" fill="#8c3a48" opacity="0.45" stroke="none" transform="rotate(17.2 228 577)"></rect>
+            <rect x="10" y="309" width="40" height="180" fill="#2b2b2e"></rect>
+            <rect x="26" y="336" width="9" height="126" fill="#0d0d0f" stroke="none"></rect>
+            <g transform="rotate(17.2 367 620)">
+              <rect x="321" y="530" rx="10" width="92" height="180" fill="#d9c9ad"></rect>
+              <line x1="321" y1="552" x2="413" y2="552"></line>
+              <line x1="321" y1="688" x2="413" y2="688"></line>
+              <line x1="399" y1="552" x2="399" y2="688"></line>
+              <line x1="321" y1="620" x2="399" y2="620"></line>
+            </g>
+            <rect x="575" y="19" width="65" height="175" fill="#4a3626"></rect>
+            <rect x="612" y="78" width="6" height="56" fill="#111111" stroke="none"></rect>
+            <circle cx="549" cy="106" r="24" fill="#2a2a2c"></circle>
+            <rect x="517" y="80" width="8" height="52" fill="#2a2a2c" stroke="none"></rect>
+            <g transform="rotate(17.2 463 650)">
+              <rect x="423" y="560" width="80" height="180" fill="#232120"></rect>
+              <circle cx="528" cy="650" r="24" fill="#2a2a2c"></circle>
+              <rect x="549" y="624" width="8" height="52" fill="#2a2a2c" stroke="none"></rect>
+            </g>
+          </g>
+          <g font-family="ui-monospace,monospace" font-size="15" fill="#454b55">
+            <line x1="30" y1="307" x2="70" y2="270" stroke="#9aa0a8" stroke-dasharray="3 3"></line>
+            <text x="76" y="266">Mueble TV 180×40 · TV 55″</text>
+            <text x="352" y="500" text-anchor="middle">Sofá · 1,80</text>
+            <text x="150" y="452" text-anchor="middle">Alfombra</text>
+            <text x="440" y="32" text-anchor="middle">Escritorio 1 · 1,75×0,65</text>
+            <line x1="573" y1="42" x2="530" y2="34" stroke="#9aa0a8" stroke-dasharray="3 3"></line>
+            <text x="370" y="545" text-anchor="middle">Escritorio 2 · 1,80×0,80</text>
+            <line x1="438" y1="580" x2="395" y2="552" stroke="#9aa0a8" stroke-dasharray="3 3"></line>
+          </g>
+        </g>
+
+        <g style="display:{{planB}}">
+          <g style="display:{{bB_A}}" font-family="ui-monospace,monospace" font-size="12" fill="#6d675c">
+            <rect x="15" y="8" width="570" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="300" y="32" text-anchor="middle">Aparador 5,70</text>
+            <rect x="596" y="10" width="37" height="192" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text transform="translate(619,106) rotate(-90)" text-anchor="middle">Ap. 1,92</text>
+            <rect x="15" y="753" width="330" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="180" y="777" text-anchor="middle">Aparador 3,30</text>
+            <rect x="495" y="753" width="130" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="560" y="777" text-anchor="middle">Ap. 1,30</text>
+            <rect x="596" y="560" width="37" height="185" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <rect x="601" y="564" width="27" height="177" fill="none" stroke="#a8773f" stroke-width="1.5" stroke-dasharray="5 4"></rect>
+            <text transform="translate(619,652) rotate(-90)" text-anchor="middle">Ap. 1,85 + baldas</text>
+          </g>
+          <g style="display:{{bB_B}}" font-family="ui-monospace,monospace" font-size="12" fill="#6d675c">
+            <rect x="15" y="8" width="570" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="300" y="32" text-anchor="middle">Arcón 5,70</text>
+            <rect x="596" y="10" width="37" height="192" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text transform="translate(619,106) rotate(-90)" text-anchor="middle">Arcón 1,92</text>
+            <rect x="15" y="753" width="330" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="180" y="777" text-anchor="middle">Arcón 3,30</text>
+            <rect x="495" y="753" width="130" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="560" y="777" text-anchor="middle">Arcón 1,30</text>
+            <rect x="596" y="560" width="37" height="185" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <rect x="601" y="564" width="27" height="177" fill="none" stroke="#a8773f" stroke-width="1.5" stroke-dasharray="5 4"></rect>
+            <text transform="translate(619,652) rotate(-90)" text-anchor="middle">Arcón 1,85 + baldas</text>
+          </g>
+          <g style="display:{{bB_C}}" font-family="ui-monospace,monospace" font-size="12" fill="#6d675c">
+            <rect x="15" y="8" width="570" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="300" y="32" text-anchor="middle">Arcón 5,70</text>
+            <rect x="596" y="10" width="37" height="192" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text transform="translate(619,106) rotate(-90)" text-anchor="middle">Ap. 1,92</text>
+            <rect x="15" y="753" width="330" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="180" y="777" text-anchor="middle">Aparador 3,30</text>
+            <rect x="495" y="753" width="130" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="560" y="777" text-anchor="middle">Arcón 1,30</text>
+            <rect x="596" y="560" width="37" height="185" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <rect x="601" y="564" width="27" height="177" fill="none" stroke="#a8773f" stroke-width="1.5" stroke-dasharray="5 4"></rect>
+            <text transform="translate(619,652) rotate(-90)" text-anchor="middle">Arcón 1,85 + baldas</text>
+          </g>
+          <g stroke="#7c7466" stroke-width="2">
+            <rect x="10" y="309" width="40" height="180" fill="#2b2b2e"></rect>
+            <rect x="26" y="336" width="9" height="126" fill="#0d0d0f" stroke="none"></rect>
+            <rect x="110" y="290" width="140" height="140" rx="6" fill="#8c3a48" opacity="0.45" stroke="none"></rect>
+            <g transform="rotate(-43 285 170)">
+              <rect x="239" y="80" rx="10" width="92" height="180" fill="#d9c9ad"></rect>
+              <line x1="239" y1="102" x2="331" y2="102"></line>
+              <line x1="239" y1="238" x2="331" y2="238"></line>
+              <line x1="317" y1="102" x2="317" y2="238"></line>
+              <line x1="239" y1="170" x2="317" y2="170"></line>
+            </g>
+            <g transform="rotate(14 280 460)">
+              <rect x="240" y="420" rx="8" width="80" height="80" fill="#d9c9ad"></rect>
+              <line x1="304" y1="420" x2="304" y2="500"></line>
+            </g>
+            <rect x="350" y="552" width="75" height="238" fill="#232120"></rect>
+            <rect x="425" y="552" width="65" height="238" fill="#4a3626"></rect>
+            <rect x="442" y="650" width="6" height="56" fill="#111111" stroke="none"></rect>
+            <circle cx="295" cy="660" r="24" fill="#2a2a2c"></circle>
+            <rect x="263" y="634" width="8" height="52" fill="#2a2a2c" stroke="none"></rect>
+            <circle cx="535" cy="660" r="24" fill="#2a2a2c"></circle>
+            <rect x="557" y="634" width="8" height="52" fill="#2a2a2c" stroke="none"></rect>
+            <line x1="460" y1="467" x2="460" y2="547" stroke="#a34d2e" stroke-width="1.5" stroke-dasharray="4 3"></line>
+          </g>
+          <g font-family="ui-monospace,monospace" font-size="15" fill="#454b55">
+            <text x="285" y="310" text-anchor="middle">Sofá · 1,80</text>
+            <text x="280" y="537" text-anchor="middle">Butaca</text>
+            <text x="180" y="365" text-anchor="middle">Alfombra</text>
+            <text transform="translate(392,671) rotate(-90)" text-anchor="middle" fill="#f2efe8" font-size="13">Escritorio 2</text>
+            <text transform="translate(462,671) rotate(-90)" text-anchor="middle" fill="#f2efe8" font-size="13">Escritorio 1</text>
+            <text x="470" y="512" fill="#a34d2e" font-size="13">0,90</text>
+          </g>
+        </g>
+
+        <g style="display:{{planC}}">
+          <g style="display:{{bC_A}}" font-family="ui-monospace,monospace" font-size="12" fill="#6d675c">
+            <rect x="15" y="8" width="540" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="285" y="32" text-anchor="middle">Aparador 5,40</text>
+            <rect x="15" y="753" width="525" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="277" y="777" text-anchor="middle">Aparador 5,25</text>
+            <rect x="596" y="560" width="37" height="185" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <rect x="601" y="564" width="27" height="177" fill="none" stroke="#a8773f" stroke-width="1.5" stroke-dasharray="5 4"></rect>
+            <text transform="translate(619,652) rotate(-90)" text-anchor="middle">Ap. 1,85 + baldas</text>
+          </g>
+          <g style="display:{{bC_B}}" font-family="ui-monospace,monospace" font-size="12" fill="#6d675c">
+            <rect x="15" y="8" width="540" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="285" y="32" text-anchor="middle">Arcón 5,40</text>
+            <rect x="15" y="753" width="525" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="277" y="777" text-anchor="middle">Arcón 5,25</text>
+            <rect x="596" y="560" width="37" height="185" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <rect x="601" y="564" width="27" height="177" fill="none" stroke="#a8773f" stroke-width="1.5" stroke-dasharray="5 4"></rect>
+            <text transform="translate(619,652) rotate(-90)" text-anchor="middle">Arcón 1,85 + baldas</text>
+          </g>
+          <g style="display:{{bC_C}}" font-family="ui-monospace,monospace" font-size="12" fill="#6d675c">
+            <rect x="15" y="8" width="305" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="167" y="32" text-anchor="middle">Aparador 3,05</text>
+            <rect x="320" y="8" width="235" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="437" y="32" text-anchor="middle">Arcón 2,35</text>
+            <rect x="15" y="753" width="255" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="142" y="777" text-anchor="middle">Arcón 2,55</text>
+            <rect x="270" y="753" width="270" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="405" y="777" text-anchor="middle">Aparador 2,70</text>
+            <rect x="596" y="560" width="37" height="185" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <rect x="601" y="564" width="27" height="177" fill="none" stroke="#a8773f" stroke-width="1.5" stroke-dasharray="5 4"></rect>
+            <text transform="translate(619,652) rotate(-90)" text-anchor="middle">Arcón 1,85 + baldas</text>
+          </g>
+          <g stroke="#7c7466" stroke-width="2">
+            <rect x="10" y="309" width="40" height="180" fill="#2b2b2e"></rect>
+            <rect x="26" y="336" width="9" height="126" fill="#0d0d0f" stroke="none"></rect>
+            <rect x="105" y="329" width="140" height="140" rx="6" fill="#8c3a48" opacity="0.45" stroke="none"></rect>
+            <rect x="249" y="309" rx="10" width="92" height="180" fill="#d9c9ad"></rect>
+            <line x1="249" y1="331" x2="341" y2="331"></line>
+            <line x1="249" y1="467" x2="341" y2="467"></line>
+            <line x1="327" y1="331" x2="327" y2="467"></line>
+            <line x1="249" y1="399" x2="327" y2="399"></line>
+            <g transform="rotate(-45 195 235)">
+              <rect x="155" y="195" rx="8" width="80" height="80" fill="#d9c9ad"></rect>
+              <line x1="219" y1="195" x2="219" y2="275"></line>
+            </g>
+            <g transform="rotate(45 195 563)">
+              <rect x="155" y="523" rx="8" width="80" height="80" fill="#d9c9ad"></rect>
+              <line x1="219" y1="523" x2="219" y2="603"></line>
+            </g>
+            <rect x="575" y="19" width="65" height="175" fill="#4a3626"></rect>
+            <rect x="612" y="78" width="6" height="56" fill="#111111" stroke="none"></rect>
+            <circle cx="549" cy="106" r="24" fill="#2a2a2c"></circle>
+            <rect x="517" y="80" width="8" height="52" fill="#2a2a2c" stroke="none"></rect>
+            <g transform="rotate(26 417 630)">
+              <rect x="377" y="540" width="80" height="180" fill="#232120"></rect>
+              <circle cx="479" cy="630" r="24" fill="#2a2a2c"></circle>
+              <rect x="503" y="604" width="8" height="52" fill="#2a2a2c" stroke="none"></rect>
+            </g>
+          </g>
+          <g font-family="ui-monospace,monospace" font-size="15" fill="#454b55">
+            <text x="295" y="295" text-anchor="middle">Sofá · 1,80</text>
+            <text x="175" y="405" text-anchor="middle">Alfombra</text>
+            <text x="195" y="170" text-anchor="middle">Butaca</text>
+            <text x="195" y="636" text-anchor="middle">Butaca</text>
+            <text transform="translate(596,106) rotate(-90)" text-anchor="middle" fill="#f2efe8" font-size="13">Escr. 1</text>
+            <text transform="translate(404,630) rotate(-64)" text-anchor="middle" fill="#f2efe8" font-size="13">Escr. 2</text>
+          </g>
+        </g>
+
+        <g style="display:{{planD}}">
+          <g style="display:{{bD_A}}" font-family="ui-monospace,monospace" font-size="12" fill="#6d675c">
+            <rect x="15" y="8" width="570" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="300" y="32" text-anchor="middle">Aparador 5,70</text>
+            <rect x="15" y="753" width="275" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="152" y="777" text-anchor="middle">Aparador 2,75</text>
+            <rect x="596" y="10" width="37" height="192" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <rect x="601" y="14" width="27" height="184" fill="none" stroke="#a8773f" stroke-width="1.5" stroke-dasharray="5 4"></rect>
+            <text transform="translate(619,106) rotate(-90)" text-anchor="middle">Ap. 1,92 + baldas</text>
+          </g>
+          <g style="display:{{bD_B}}" font-family="ui-monospace,monospace" font-size="12" fill="#6d675c">
+            <rect x="15" y="8" width="570" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="300" y="32" text-anchor="middle">Arcón 5,70</text>
+            <rect x="15" y="753" width="275" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="152" y="777" text-anchor="middle">Arcón 2,75</text>
+            <rect x="596" y="10" width="37" height="192" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <rect x="601" y="14" width="27" height="184" fill="none" stroke="#a8773f" stroke-width="1.5" stroke-dasharray="5 4"></rect>
+            <text transform="translate(619,106) rotate(-90)" text-anchor="middle">Arcón 1,92 + baldas</text>
+          </g>
+          <g style="display:{{bD_C}}" font-family="ui-monospace,monospace" font-size="12" fill="#6d675c">
+            <rect x="15" y="8" width="285" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="157" y="32" text-anchor="middle">Apar. 2,85</text>
+            <rect x="300" y="8" width="285" height="37" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="442" y="32" text-anchor="middle">Arcón 2,85</text>
+            <rect x="15" y="753" width="275" height="37" fill="#efe9df" stroke="#8a8377" stroke-width="2"></rect>
+            <text x="152" y="777" text-anchor="middle">Aparador 2,75</text>
+            <rect x="596" y="10" width="37" height="192" fill="#ead9bd" stroke="#8a8377" stroke-width="2"></rect>
+            <rect x="601" y="14" width="27" height="184" fill="none" stroke="#a8773f" stroke-width="1.5" stroke-dasharray="5 4"></rect>
+            <text transform="translate(619,106) rotate(-90)" text-anchor="middle">Arcón 1,92 + baldas</text>
+          </g>
+          <g stroke="#7c7466" stroke-width="2">
+            <rect x="588" y="588" width="40" height="180" fill="#2b2b2e"></rect>
+            <rect x="584" y="615" width="9" height="126" fill="#0d0d0f" stroke="none"></rect>
+            <rect x="435" y="565" width="140" height="140" rx="6" fill="#8c3a48" opacity="0.45" stroke="none"></rect>
+            <rect x="290" y="570" rx="10" width="92" height="228" fill="#e6dcc8"></rect>
+            <rect x="382" y="706" rx="10" width="136" height="92" fill="#e6dcc8"></rect>
+            <line x1="318" y1="596" x2="318" y2="706"></line>
+            <line x1="290" y1="596" x2="382" y2="596"></line>
+            <line x1="492" y1="706" x2="492" y2="798"></line>
+            <rect x="43" y="335" width="175" height="65" fill="#4a3626"></rect>
+            <rect x="102" y="386" width="55" height="6" fill="#111111" stroke="none"></rect>
+            <circle cx="130" cy="305" r="24" fill="#2a2a2c"></circle>
+            <rect x="104" y="273" width="52" height="8" fill="#2a2a2c" stroke="none"></rect>
+            <rect x="40" y="400" width="180" height="80" fill="#232120"></rect>
+            <circle cx="130" cy="501" r="24" fill="#2a2a2c"></circle>
+            <rect x="104" y="521" width="52" height="8" fill="#2a2a2c" stroke="none"></rect>
+          </g>
+          <g font-family="ui-monospace,monospace" font-size="15" fill="#454b55">
+            <text x="130" y="372" text-anchor="middle" fill="#f2efe8" font-size="13">Escritorio 1</text>
+            <text x="130" y="445" text-anchor="middle" fill="#f2efe8" font-size="13">Escritorio 2</text>
+            <text x="608" y="578" text-anchor="middle">TV</text>
+            <text x="282" y="683" text-anchor="end">Sofá en L</text>
+            <text x="505" y="650" text-anchor="middle">Alfombra</text>
+          </g>
+        </g>
+
+        <rect x="451" y="212" width="189" height="250" fill="#efe9dd" stroke="#8a8377" stroke-width="2" stroke-dasharray="8 5"></rect>
+        <line x1="478" y1="212" x2="478" y2="462" stroke="#8a8377" stroke-width="1.5"></line>
+        <line x1="505" y1="212" x2="505" y2="462" stroke="#8a8377" stroke-width="1.5"></line>
+        <line x1="532" y1="212" x2="532" y2="462" stroke="#8a8377" stroke-width="1.5"></line>
+        <line x1="559" y1="212" x2="559" y2="462" stroke="#8a8377" stroke-width="1.5"></line>
+        <line x1="586" y1="212" x2="586" y2="462" stroke="#8a8377" stroke-width="1.5"></line>
+        <line x1="613" y1="212" x2="613" y2="462" stroke="#8a8377" stroke-width="1.5"></line>
+        <line x1="462" y1="337" x2="628" y2="337" stroke="#5a5248" stroke-width="2" marker-end="url(#mA)"></line>
+        <text x="500" y="329" font-family="ui-monospace,monospace" font-size="14" fill="#5a5248" style="paint-order:stroke;stroke:#efe9dd;stroke-width:4">BAJA</text>
+        <line x1="451" y1="212" x2="633" y2="212" stroke="#a8773f" stroke-width="6"></line>
+        <line x1="451" y1="462" x2="633" y2="462" stroke="#a8773f" stroke-width="6"></line>
+        <circle cx="451" cy="212" r="6" fill="#8a5f33"></circle>
+        <circle cx="451" cy="462" r="6" fill="#8a5f33"></circle>
+        <circle cx="633" cy="212" r="6" fill="#8a5f33"></circle>
+        <circle cx="633" cy="462" r="6" fill="#8a5f33"></circle>
+        <rect x="596" y="462" width="44" height="93" fill="#2b3440" stroke="#2b3440" stroke-width="4"></rect>
+
+        <g font-family="ui-monospace,monospace" font-size="15" fill="#454b55">
+          <line x1="9" y1="162" x2="52" y2="162" stroke="#9aa0a8" stroke-dasharray="3 3"></line>
+          <text x="58" y="167" style="paint-order:stroke;stroke:#f9f6f0;stroke-width:5">Ventana</text>
+          <line x1="9" y1="632" x2="52" y2="632" stroke="#9aa0a8" stroke-dasharray="3 3"></line>
+          <text x="58" y="637" style="paint-order:stroke;stroke:#f9f6f0;stroke-width:5">Ventana</text>
+        </g>
+
+        <g style="display:{{cotasDisplay}}" font-family="ui-monospace,monospace" font-size="16" fill="#a34d2e">
+          <g stroke="#a34d2e" stroke-width="1" opacity="0.55">
+            <line x1="0" y1="0" x2="0" y2="-60"></line>
+            <line x1="640" y1="0" x2="640" y2="-60"></line>
+            <line x1="0" y1="0" x2="-115" y2="0"></line>
+            <line x1="0" y1="798" x2="-60" y2="798"></line>
+            <line x1="0" y1="209" x2="-105" y2="209"></line>
+            <line x1="0" y1="589" x2="-105" y2="589"></line>
+            <line x1="640" y1="0" x2="712" y2="0"></line>
+            <line x1="640" y1="212" x2="712" y2="212"></line>
+            <line x1="640" y1="462" x2="712" y2="462"></line>
+            <line x1="640" y1="555" x2="712" y2="555"></line>
+            <line x1="640" y1="798" x2="712" y2="798"></line>
+            <line x1="451" y1="212" x2="451" y2="187"></line>
+            <line x1="596" y1="555" x2="596" y2="580"></line>
+            <line x1="640" y1="555" x2="640" y2="580"></line>
+            <line x1="596" y1="462" x2="571" y2="462"></line>
+            <line x1="596" y1="555" x2="571" y2="555"></line>
+          </g>
+          <g stroke="#a34d2e" stroke-width="1.5">
+            <line x1="0" y1="-50" x2="640" y2="-50" marker-start="url(#mA)" marker-end="url(#mA)"></line>
+            <line x1="-50" y1="0" x2="-50" y2="798" marker-start="url(#mA)" marker-end="url(#mA)"></line>
+            <line x1="-95" y1="209" x2="-95" y2="589" marker-start="url(#mA)" marker-end="url(#mA)"></line>
+            <line x1="702" y1="0" x2="702" y2="212" marker-start="url(#mA)" marker-end="url(#mA)"></line>
+            <line x1="702" y1="212" x2="702" y2="462" marker-start="url(#mA)" marker-end="url(#mA)"></line>
+            <line x1="702" y1="462" x2="702" y2="555" marker-start="url(#mA)" marker-end="url(#mA)"></line>
+            <line x1="702" y1="555" x2="702" y2="798" marker-start="url(#mA)" marker-end="url(#mA)"></line>
+            <line x1="451" y1="192" x2="640" y2="192" marker-start="url(#mA)" marker-end="url(#mA)"></line>
+            <line x1="579" y1="462" x2="579" y2="555" marker-start="url(#mA)" marker-end="url(#mA)"></line>
+            <line x1="596" y1="573" x2="640" y2="573" marker-start="url(#mA)" marker-end="url(#mA)"></line>
+          </g>
+          <text x="320" y="-62" text-anchor="middle">6,40 m</text>
+          <text transform="translate(-62,399) rotate(-90)" text-anchor="middle">7,98 m</text>
+          <text transform="translate(-107,399) rotate(-90)" text-anchor="middle">3,80 m</text>
+          <text transform="translate(726,106) rotate(-90)" text-anchor="middle">2,12</text>
+          <text transform="translate(726,337) rotate(-90)" text-anchor="middle">2,50</text>
+          <text transform="translate(726,508) rotate(-90)" text-anchor="middle" font-size="13">0,93</text>
+          <text transform="translate(726,676) rotate(-90)" text-anchor="middle">2,40</text>
+          <text x="530" y="184" text-anchor="middle">1,89</text>
+          <text transform="translate(567,508) rotate(-90)" text-anchor="middle" font-size="12">0,93</text>
+          <text x="618" y="594" text-anchor="middle" font-size="12">0,44</text>
+        </g>
+
+        <g>
+          <rect x="0" y="920" width="100" height="10" fill="#2b3440"></rect>
+          <rect x="100" y="920" width="100" height="10" fill="#ffffff" stroke="#2b3440" stroke-width="1"></rect>
+          <rect x="200" y="920" width="100" height="10" fill="#2b3440"></rect>
+          <text x="0" y="948" font-family="ui-monospace,monospace" font-size="12" fill="#5a5248">0</text>
+          <text x="96" y="948" font-family="ui-monospace,monospace" font-size="12" fill="#5a5248">1</text>
+          <text x="196" y="948" font-family="ui-monospace,monospace" font-size="12" fill="#5a5248">2</text>
+          <text x="296" y="948" font-family="ui-monospace,monospace" font-size="12" fill="#5a5248">3 m</text>
+        </g>
+        <g font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="15" fill="#5a5248">
+          <text x="0" y="990">{{notaLayout}}</text>
+          <text x="0" y="1018">Alturas: 0,98 m en laterales · 2,80 m en cumbrera · zona plana de techo de 2,30 m</text>
+          <text x="0" y="1046">Arquitectura fija: ventanas, escalera, retranqueo y Velux · cotas en metros</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;iluminacion&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Atardecer&quot;,&quot;options&quot;:[&quot;Día&quot;,&quot;Atardecer&quot;,&quot;Noche&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Ambiente&quot;},&quot;madera&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Roble&quot;,&quot;options&quot;:[&quot;Roble&quot;,&quot;Claro&quot;,&quot;Nogal&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Ambiente&quot;},&quot;medidas3D&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Vista 3D&quot;},&quot;girarAuto&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Vista 3D&quot;},&quot;mostrarCotas&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Plano de planta&quot;}}">
+class Component extends DCLogic {
+  state = { vista: 'planta', cargando: true, lay: 'B', alm: 'C' };
+  mount = React.createRef();
+
+  renderVals() {
+    const v = this.state.vista, l = this.state.lay;
+    const act = '#2b3440', actC = '#f7f4ee', ina = '#f7f4ee', inaC = '#4a5361';
+    const pd = k => l === k ? 'inline' : 'none';
+    return {
+      mount: this.mount,
+      verPlanta: () => this.setState({ vista: 'planta' }),
+      verCenital: () => this.setState({ vista: 'cenital' }),
+      ver3d: () => this.setState({ vista: '3d' }),
+      planDisplay: v === 'planta' ? 'flex' : 'none',
+      hintDisplay: v === '3d' ? 'block' : 'none',
+      cotasDisplay: (this.props.mostrarCotas ?? true) ? 'inline' : 'none',
+      estadoCarga: this.state.cargando && v !== 'planta' ? 'Cargando visor 3D…' : '',
+      tabPlantaBg: v === 'planta' ? act : ina, tabPlantaColor: v === 'planta' ? actC : inaC,
+      tabCenitalBg: v === 'cenital' ? act : ina, tabCenitalColor: v === 'cenital' ? actC : inaC,
+      tab3dBg: v === '3d' ? act : ina, tab3dColor: v === '3d' ? actC : inaC,
+      layA: () => this.setState({ lay: 'A' }), layB: () => this.setState({ lay: 'B' }),
+      layC: () => this.setState({ lay: 'C' }), layD: () => this.setState({ lay: 'D' }),
+      btnLABg: l === 'A' ? act : ina, btnLAColor: l === 'A' ? actC : inaC,
+      btnLBBg: l === 'B' ? act : ina, btnLBColor: l === 'B' ? actC : inaC,
+      btnLCBg: l === 'C' ? act : ina, btnLCColor: l === 'C' ? actC : inaC,
+      btnLDBg: l === 'D' ? act : ina, btnLDColor: l === 'D' ? actC : inaC,
+      planA: pd('A'), planB: pd('B'), planC: pd('C'), planD: pd('D'),
+      almN: () => this.setState({ alm: 'Ninguno' }), almA: () => this.setState({ alm: 'A' }),
+      almB: () => this.setState({ alm: 'B' }), almC: () => this.setState({ alm: 'C' }),
+      btnMNBg: this.state.alm === 'Ninguno' ? act : ina, btnMNColor: this.state.alm === 'Ninguno' ? actC : inaC,
+      btnMABg: this.state.alm === 'A' ? act : ina, btnMAColor: this.state.alm === 'A' ? actC : inaC,
+      btnMBBg: this.state.alm === 'B' ? act : ina, btnMBColor: this.state.alm === 'B' ? actC : inaC,
+      btnMCBg: this.state.alm === 'C' ? act : ina, btnMCColor: this.state.alm === 'C' ? actC : inaC,
+      bA_A: l === 'A' && this.state.alm === 'A' ? 'inline' : 'none',
+      bA_B: l === 'A' && this.state.alm === 'B' ? 'inline' : 'none',
+      bA_C: l === 'A' && this.state.alm === 'C' ? 'inline' : 'none',
+      bB_A: l === 'B' && this.state.alm === 'A' ? 'inline' : 'none',
+      bB_B: l === 'B' && this.state.alm === 'B' ? 'inline' : 'none',
+      bB_C: l === 'B' && this.state.alm === 'C' ? 'inline' : 'none',
+      bC_A: l === 'C' && this.state.alm === 'A' ? 'inline' : 'none',
+      bC_B: l === 'C' && this.state.alm === 'B' ? 'inline' : 'none',
+      bC_C: l === 'C' && this.state.alm === 'C' ? 'inline' : 'none',
+      bD_A: l === 'D' && this.state.alm === 'A' ? 'inline' : 'none',
+      bD_B: l === 'D' && this.state.alm === 'B' ? 'inline' : 'none',
+      bD_C: l === 'D' && this.state.alm === 'C' ? 'inline' : 'none',
+      layDesc: ({
+        A: 'Máster actual · almacenaje mixto arcón + aparador',
+        B: 'Isla de tableros volados bajo el Velux · sofá en diagonal + butaca frente a la TV',
+        C: 'Cine para 5: sofá centrado + dos butacas frente a la TV · escritorios separados al fondo',
+        D: 'TV bajo el Velux · sofá en L (4-5 plazas) · isla de escritorios enfrentados entre las ventanas',
+      })[l],
+      notaLayout: ({
+        A: 'A · Distribución validada del máster (13-jul-2026)',
+        B: 'B · Estudio en isla: tableros volados a 0,74 m desde el murete (hueco 0,90 con la barandilla); el aparador se interrumpe bajo ellos',
+        C: 'C · Cine simétrico: sofá + 2 butacas en abanico; almacenaje corrido en ambos muretes (~10,6 m)',
+        D: 'D · Salón bajo el Velux: sofá en L arrancando del aparador del murete; escritorios en isla entre las ventanas',
+      })[l],
+    };
+  }
+
+  componentDidMount() { this._waitThree(); }
+  _waitThree() {
+    if (window.THREE && this.mount.current) this._init();
+    else this._t = setTimeout(() => this._waitThree(), 60);
+  }
+
+  _woodTex(T, rx, ry, tone) {
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 1024;
+    const g = c.getContext('2d');
+    const tns = { 'Roble': [29, 36, 50, '#c39a63'], 'Claro': [36, 20, 66, '#e3cfae'], 'Nogal': [20, 34, 30, '#7a5638'] };
+    const tn = tns[tone] || tns['Roble'];
+    g.fillStyle = tn[3]; g.fillRect(0, 0, 1024, 1024);
+    const rowH = 64;
+    for (let r = 0; r < 16; r++) {
+      let x = 0; const y = r * rowH;
+      while (x < 1024) {
+        const w = 180 + Math.random() * 280;
+        const li = tn[2] + Math.random() * 14;
+        g.fillStyle = 'hsl(' + (tn[0] + Math.random() * 7) + ',' + (tn[1] + Math.random() * 12) + '%,' + li + '%)';
+        g.fillRect(x, y, w, rowH);
+        g.strokeStyle = 'rgba(90,60,30,0.55)'; g.lineWidth = 2;
+        g.strokeRect(x + 1, y + 1, w - 2, rowH - 2);
+        g.strokeStyle = 'rgba(120,85,45,0.25)'; g.lineWidth = 1;
+        for (let k = 0; k < 6; k++) {
+          const gy = y + 6 + Math.random() * (rowH - 12);
+          g.beginPath(); g.moveTo(x + 4, gy);
+          g.bezierCurveTo(x + w * 0.3, gy + 3, x + w * 0.6, gy - 3, x + w - 4, gy + 2);
+          g.stroke();
+        }
+        x += w;
+      }
+    }
+    const tex = new T.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = T.RepeatWrapping; tex.repeat.set(rx, ry);
+    tex.encoding = T.sRGBEncoding; tex.anisotropy = 8;
+    return tex;
+  }
+
+  _stripeTex(T) {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 64;
+    const g = c.getContext('2d');
+    const cols = ['#cbb694', '#8a715a', '#d8c8ab', '#6d5847', '#b09a78', '#e0d3b8'];
+    let x = 0, i = 0;
+    while (x < 512) { const w = 22 + Math.random() * 46; g.fillStyle = cols[i % cols.length]; g.fillRect(x, 0, w, 64); x += w; i++; }
+    const tex = new T.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = T.RepeatWrapping; tex.repeat.set(1.5, 1);
+    tex.encoding = T.sRGBEncoding;
+    return tex;
+  }
+
+  _rugTex(T) {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+    const g = c.getContext('2d');
+    g.fillStyle = '#7d2f3d'; g.fillRect(0, 0, 256, 256);
+    for (let y = 0; y < 256; y += 32) {
+      g.fillStyle = y % 64 ? '#96434e' : '#5f222e'; g.fillRect(0, y, 256, 10);
+      g.fillStyle = '#c9909a'; g.fillRect(0, y + 14, 256, 3);
+    }
+    for (let i = 0; i < 900; i++) {
+      g.fillStyle = 'rgba(255,240,230,' + (Math.random() * 0.06) + ')';
+      g.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+    }
+    const tex = new T.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = T.RepeatWrapping; tex.repeat.set(1, 1.5);
+    tex.encoding = T.sRGBEncoding;
+    return tex;
+  }
+
+  _init() {
+    const T = window.THREE, m = this.mount.current;
+    const L = 6.40, W = 7.98, KNEE = 0.98, RIDGE = 2.80, FLAT = 2.30;
+    const RUN = (W - FLAT) / 2, a = Math.atan2(RIDGE - KNEE, RUN), slp = (RIDGE - KNEE) / RUN;
+
+    const renderer = new T.WebGLRenderer({ antialias: true });
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
+    renderer.outputEncoding = T.sRGBEncoding;
+    renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+    renderer.domElement.style.display = 'block';
+    m.appendChild(renderer.domElement);
+    this.renderer = renderer;
+
+    const scene = new T.Scene(); this.scene = scene;
+
+    const wallMat = new T.MeshStandardMaterial({ color: 0xf3efe8, roughness: 0.95, side: T.DoubleSide });
+    const woodRail = new T.MeshStandardMaterial({ color: 0xa97e46, roughness: 0.6 });
+    const stepMat = new T.MeshStandardMaterial({ color: 0x8a5f33, roughness: 0.65 });
+    const glassMat = new T.MeshStandardMaterial({ color: 0xbcd6de, transparent: true, opacity: 0.22, roughness: 0.1, metalness: 0.1, side: T.DoubleSide });
+    const frameMat = new T.MeshStandardMaterial({ color: 0x3e2e1e, roughness: 0.6 });
+    const blackMat = new T.MeshStandardMaterial({ color: 0x1d1d20, roughness: 0.5 });
+
+    const box = (mat, sx, sy, sz, x, y, z) => {
+      const me = new T.Mesh(new T.BoxGeometry(sx, sy, sz), mat);
+      me.position.set(x, y, z);
+      me.castShadow = true; me.receiveShadow = true; scene.add(me); return me;
+    };
+
+    // ---- suelo (3 piezas alrededor del hueco de escalera)
+    this.floorPieces = [];
+    const floorPiece = (sx, sz, x, z) => {
+      const mat = new T.MeshStandardMaterial({ map: this._woodTex(T, sx / 4, sz / 2.1), roughness: 0.5 });
+      this.floorPieces.push({ mat: mat, sx: sx, sz: sz });
+      const me = new T.Mesh(new T.BoxGeometry(sx, 0.06, sz), mat);
+      me.position.set(x, -0.03, z); me.receiveShadow = true; scene.add(me);
+    };
+    const HX1 = 4.51, HZ1 = 2.12, HZ2 = 4.62;
+    floorPiece(HX1, W, HX1 / 2, W / 2);
+    floorPiece(L - HX1, HZ1, (L + HX1) / 2, HZ1 / 2);
+    floorPiece(L - HX1, W - HZ2, (L + HX1) / 2, (W + HZ2) / 2);
+
+    // ---- hueco de escalera
+    const shaft = new T.Mesh(new T.BoxGeometry(L - HX1, 2.0, HZ2 - HZ1),
+      new T.MeshStandardMaterial({ color: 0x241d17, side: T.BackSide, roughness: 1 }));
+    shaft.position.set((HX1 + L) / 2, -1.0, (HZ1 + HZ2) / 2); scene.add(shaft);
+    for (let i = 0; i < 7; i++) {
+      const s = box(stepMat, 0.27, 0.18, HZ2 - HZ1 - 0.06, HX1 + 0.135 + 0.27 * i, -0.09 - 0.18 * i, (HZ1 + HZ2) / 2);
+      s.castShadow = false;
+    }
+
+    // ---- barandilla
+    const rail = (x1, z1, x2, z2) => {
+      const len = Math.abs(x2 - x1);
+      const cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
+      [[x1, z1], [x2, z2]].forEach(p => box(woodRail, 0.07, 0.92, 0.07, p[0], 0.46, p[1]));
+      const gl = new T.Mesh(new T.BoxGeometry(len - 0.12, 0.68, 0.016), glassMat);
+      gl.position.set(cx, 0.48, cz); scene.add(gl);
+      box(woodRail, len + 0.07, 0.05, 0.09, cx, 0.9, cz);
+    };
+    rail(4.51, 2.12, 6.37, 2.12);
+    rail(4.51, 4.62, 6.37, 4.62);
+
+    // ---- muros piñón (ventanas en el de la TV)
+    const gableShape = () => {
+      const s = new T.Shape();
+      s.moveTo(0, 0); s.lineTo(W, 0); s.lineTo(W, KNEE);
+      s.lineTo(W - RUN, RIDGE); s.lineTo(RUN, RIDGE); s.lineTo(0, KNEE); s.closePath();
+      return s;
+    };
+    const winQuad = (z1, z2, mirror) => {
+      const top = z => 0.98 + slp * (mirror ? (W - z) : z) - 0.35;
+      return [[z1, 0.45], [z2, 0.45], [z2, top(z2)], [z1, top(z1)]];
+    };
+    const w1 = winQuad(1.19, 2.09, false), w2 = winQuad(5.89, 6.79, true);
+    const tvGable = gableShape();
+    [w1, w2].forEach(q => {
+      const h = new T.Path(); h.moveTo(q[0][0], q[0][1]);
+      q.slice(1).forEach(p => h.lineTo(p[0], p[1])); h.closePath();
+      tvGable.holes.push(h);
+    });
+    const gNear = new T.Group(), gFar = new T.Group();
+    scene.add(gNear); scene.add(gFar);
+    this.gNear = gNear; this.gFar = gFar;
+    const mkGable = (shape, x, ry, grp) => {
+      const geo = new T.ExtrudeGeometry(shape, { depth: 0.12, bevelEnabled: false });
+      const me = new T.Mesh(geo, wallMat);
+      me.rotation.y = ry; me.position.set(x, 0, ry < 0 ? 0 : W);
+      me.castShadow = true; me.receiveShadow = true; grp.add(me);
+    };
+    mkGable(tvGable, 0, -Math.PI / 2, gNear);
+    mkGable(gableShape(), L, Math.PI / 2, gFar);
+    const jog = new T.Mesh(new T.BoxGeometry(0.44, 2.35, 0.93), wallMat);
+    jog.position.set(6.18, 1.175, 5.085);
+    jog.castShadow = true; jog.receiveShadow = true; gFar.add(jog);
+
+    [w1, w2].forEach(q => {
+      const cxz = (q[0][0] + q[1][0]) / 2, cy = (q[0][1] + q[2][1] + q[3][1] + q[1][1]) / 4;
+      const inset = q.map(p => [cxz + (p[0] - cxz) * 0.84, cy + (p[1] - cy) * 0.84]);
+      const fs = new T.Shape(); fs.moveTo(q[0][0], q[0][1]);
+      q.slice(1).forEach(p => fs.lineTo(p[0], p[1])); fs.closePath();
+      const hole = new T.Path(); hole.moveTo(inset[0][0], inset[0][1]);
+      inset.slice(1).forEach(p => hole.lineTo(p[0], p[1])); hole.closePath();
+      fs.holes.push(hole);
+      const fr = new T.Mesh(new T.ExtrudeGeometry(fs, { depth: 0.07, bevelEnabled: false }), frameMat);
+      fr.rotation.y = -Math.PI / 2; fr.position.set(0.09, 0, 0); gNear.add(fr);
+      const gs = new T.Shape(); gs.moveTo(inset[0][0], inset[0][1]);
+      inset.slice(1).forEach(p => gs.lineTo(p[0], p[1])); gs.closePath();
+      const gl = new T.Mesh(new T.ShapeGeometry(gs), glassMat);
+      gl.rotation.y = -Math.PI / 2; gl.position.set(0.11, 0, 0); gNear.add(gl);
+    });
+
+    // ---- muretes laterales
+    this.kneeA = box(wallMat, L, KNEE, 0.12, L / 2, KNEE / 2, -0.06); this.kneeA.castShadow = false;
+    this.kneeB = box(wallMat, L, KNEE, 0.12, L / 2, KNEE / 2, W + 0.06); this.kneeB.castShadow = false;
+
+    // ---- radiadores fijos junto a las ventanas del hastial TV (sobresalen 0,15)
+    const radMat = new T.MeshStandardMaterial({ color: 0xf2f2f0, roughness: 0.4 });
+    const radiator = zc => {
+      const r = new T.Group(); r.position.set(0, 0, zc); scene.add(r);
+      for (let i = 0; i < 11; i++) {
+        const f = new T.Mesh(new T.BoxGeometry(0.10, 0.58, 0.062), radMat);
+        f.position.set(0.075, 0.48, -0.41 + i * 0.082); f.castShadow = true; r.add(f);
+      }
+      const t1 = new T.Mesh(new T.BoxGeometry(0.06, 0.05, 0.88), radMat);
+      t1.position.set(0.075, 0.77, 0); r.add(t1);
+      const t2 = t1.clone(); t2.position.y = 0.19; r.add(t2);
+    };
+    radiator(0.60); radiator(7.38);
+
+    // ---- cubierta
+    const roof = new T.Group(); scene.add(roof); this.roof = roof;
+    const slopeLen = Math.sqrt(RUN * RUN + (RIDGE - KNEE) * (RIDGE - KNEE));
+    const mkSlope = (rx, cz) => {
+      const me = new T.Mesh(new T.BoxGeometry(L, 0.08, slopeLen), wallMat);
+      me.rotation.x = rx; me.position.set(L / 2, (KNEE + RIDGE) / 2 + 0.04, cz);
+      me.receiveShadow = true; roof.add(me); return me;
+    };
+    this.slopeA = mkSlope(-a, RUN / 2);
+    this.slopeB = mkSlope(a, W - RUN / 2);
+    const ridge = new T.Mesh(new T.BoxGeometry(L, 0.08, FLAT), wallMat);
+    ridge.position.set(L / 2, RIDGE + 0.04, W / 2); ridge.receiveShadow = true; roof.add(ridge);
+
+    const skyY = KNEE + slp * 1.2, skyZ = W - 1.2;
+    const skFrame = new T.Mesh(new T.BoxGeometry(1.0, 0.06, 0.85), frameMat);
+    skFrame.rotation.x = a; skFrame.position.set(4.60, skyY, skyZ); roof.add(skFrame);
+    const skyMat = new T.MeshBasicMaterial({ color: 0xf4f8fc }); this.skyMat = skyMat;
+    const sk = new T.Mesh(new T.PlaneGeometry(0.88, 0.72), skyMat);
+    sk.rotation.x = a - Math.PI / 2;
+    sk.position.set(4.60, skyY - 0.028, skyZ - 0.025); roof.add(sk);
+
+    this.bulbs = [];
+    [[2.1, 3.99], [4.3, 3.99]].forEach(p => {
+      const cord = new T.Mesh(new T.CylinderGeometry(0.006, 0.006, 0.5), blackMat);
+      cord.position.set(p[0], RIDGE - 0.25, p[1]); roof.add(cord);
+      const bulb = new T.Mesh(new T.SphereGeometry(0.05, 16, 12),
+        new T.MeshStandardMaterial({ color: 0xf8f4ea, emissive: 0xffe2b0, emissiveIntensity: 0.6 }));
+      bulb.position.set(p[0], RIDGE - 0.53, p[1]); roof.add(bulb);
+      const pl = new T.PointLight(0xffd9a0, 0.12, 11, 1.8);
+      pl.position.set(p[0], RIDGE - 0.6, p[1]); scene.add(pl); this.bulbs.push(pl);
+    });
+
+    // ---- mobiliario por distribución
+    this._layouts(T, scene);
+
+    // ---- etiquetas de medidas del volumen
+    const medidas = new T.Group(); scene.add(medidas); this.medidas = medidas;
+    const label = (txt, x, y, z, s) => {
+      const c = document.createElement('canvas');
+      const g = c.getContext('2d');
+      g.font = '600 44px "Helvetica Neue", Helvetica, Arial, sans-serif';
+      const tw = g.measureText(txt).width;
+      c.width = Math.ceil(tw) + 48; c.height = 76;
+      g.font = '600 44px "Helvetica Neue", Helvetica, Arial, sans-serif';
+      g.fillStyle = 'rgba(43,52,64,0.88)';
+      g.beginPath(); g.roundRect(0, 0, c.width, 76, 20); g.fill();
+      g.fillStyle = '#f7f4ee'; g.textBaseline = 'middle';
+      g.fillText(txt, 24, 40);
+      const tex = new T.CanvasTexture(c); tex.encoding = T.sRGBEncoding;
+      const sp = new T.Sprite(new T.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+      const k = s || 0.42;
+      sp.scale.set(k * c.width / 76, k, 1);
+      sp.position.set(x, y, z); sp.renderOrder = 10;
+      medidas.add(sp);
+    };
+    label('7,98 m', 5.9, 1.35, 3.99);
+    label('6,40 m', 3.2, 1.35, 0.45);
+    label('Hueco 2,50 × 1,89', 5.45, 1.0, 3.37, 0.32);
+    label('Cumbrera 2,80 m', 3.2, 2.55, 3.99, 0.32);
+    label('Murete 0,98 m', 1.4, 0.75, 7.6, 0.30);
+    medidas.visible = false;
+
+    // ---- iluminación
+    const hemi = new T.HemisphereLight(0xe8f0f8, 0x9a7c5c, 0.85); scene.add(hemi); this.hemi = hemi;
+    const sun = new T.DirectionalLight(0xfff1da, 1.5);
+    sun.position.set(-6.5, 6.5, 1.8); sun.target.position.set(3.2, 0, 3.99);
+    scene.add(sun); scene.add(sun.target);
+    sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left = -9; sun.shadow.camera.right = 9;
+    sun.shadow.camera.top = 9; sun.shadow.camera.bottom = -9;
+    sun.shadow.camera.near = 1; sun.shadow.camera.far = 30; sun.shadow.bias = -0.0005;
+    this.sun = sun;
+
+    // ---- cámaras
+    const persp = new T.PerspectiveCamera(55, 1, 0.1, 100); this.persp = persp;
+    this.tgt = new T.Vector3(3.2, 1.0, 3.99);
+    this.th = 0.85; this.ph = 1.12; this.rad = 9.5;
+    const ortho = new T.OrthographicCamera(-5, 5, 4, -4, 0.1, 50); this.ortho = ortho;
+    ortho.position.set(3.2, 20, 3.99); ortho.up.set(0, 0, -1); ortho.lookAt(3.2, 0, 3.99);
+
+    const resize = () => {
+      const w = m.clientWidth || 1, h = m.clientHeight || 1;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(w, h);
+      persp.aspect = w / h; persp.updateProjectionMatrix();
+      const asp = w / h, vw = 7.8, vh = 9.4;
+      let hw, hh;
+      if (asp > vw / vh) { hh = vh / 2; hw = hh * asp; } else { hw = vw / 2; hh = hw / asp; }
+      ortho.left = -hw; ortho.right = hw; ortho.top = hh; ortho.bottom = -hh;
+      ortho.updateProjectionMatrix();
+    };
+    this.ro = new ResizeObserver(resize); this.ro.observe(m); resize();
+
+    // ---- órbita
+    const el = renderer.domElement;
+    this._drag = false; let px = 0, py = 0;
+    el.addEventListener('pointerdown', e => {
+      if (this.state.vista !== '3d') return;
+      this._drag = true; px = e.clientX; py = e.clientY; el.setPointerCapture(e.pointerId);
+    });
+    el.addEventListener('pointermove', e => {
+      if (!this._drag) return;
+      this.th -= (e.clientX - px) * 0.005;
+      this.ph = Math.min(1.52, Math.max(0.15, this.ph - (e.clientY - py) * 0.005));
+      px = e.clientX; py = e.clientY;
+    });
+    el.addEventListener('pointerup', () => { this._drag = false; });
+    el.addEventListener('wheel', e => {
+      if (this.state.vista !== '3d') return;
+      e.preventDefault();
+      this.rad = Math.min(20, Math.max(3.5, this.rad * (1 + e.deltaY * 0.001)));
+    }, { passive: false });
+
+    this._mode = '';
+    const loop = () => {
+      this._raf = requestAnimationFrame(loop);
+      const mode = this.props.iluminacion ?? 'Día';
+      if (mode !== this._mode) this._applyMode(mode);
+      const wood = this.props.madera ?? 'Roble';
+      if (wood !== (this._wood || 'Roble')) this._applyWood(wood);
+      const v = this.state.vista;
+      if (v === 'planta') return;
+      this.medidas.visible = (this.props.medidas3D ?? false) && v === '3d';
+      Object.keys(this.lay).forEach(k => { this.lay[k].visible = k === this.state.lay; });
+      Object.keys(this.storSets).forEach(lk => {
+        const ss = this.storSets[lk];
+        Object.keys(ss).forEach(ok => { ss[ok].visible = ok === this.state.alm; });
+      });
+      if (v === '3d' && (this.props.girarAuto ?? false) && !this._drag) this.th += 0.0025;
+      persp.position.set(
+        this.tgt.x + this.rad * Math.sin(this.ph) * Math.cos(this.th),
+        this.tgt.y + this.rad * Math.cos(this.ph),
+        this.tgt.z + this.rad * Math.sin(this.ph) * Math.sin(this.th));
+      persp.lookAt(this.tgt);
+      const cp = persp.position;
+      const inside = cp.x > 0 && cp.x < 6.4 && cp.z > 0 && cp.z < 7.98 && cp.y < 2.8;
+      if (v === 'cenital') {
+        this.roof.visible = false;
+        this.gNear.visible = this.gFar.visible = true;
+        this.kneeA.visible = this.kneeB.visible = true;
+        this.slopeA.visible = this.slopeB.visible = true;
+      } else {
+        this.roof.visible = !(cp.y > 3.4) || inside;
+        const hideNearZ = !inside && cp.z < 3.99, hideFarZ = !inside && cp.z >= 3.99;
+        this.kneeA.visible = !hideNearZ; this.slopeA.visible = !hideNearZ;
+        this.kneeB.visible = !hideFarZ; this.slopeB.visible = !hideFarZ;
+        this.gNear.visible = inside || cp.x >= 0.5;
+        this.gFar.visible = inside || cp.x <= 5.9;
+      }
+      renderer.render(scene, v === 'cenital' ? ortho : persp);
+    };
+    loop();
+    this.setState({ cargando: false });
+  }
+
+  _layouts(T, scene) {
+    const black = new T.MeshStandardMaterial({ color: 0x1d1d20, roughness: 0.5 });
+    const walnut = new T.MeshStandardMaterial({ color: 0x4a3220, roughness: 0.55 });
+    const whiteM = new T.MeshStandardMaterial({ color: 0xe6e6e8, roughness: 0.5 });
+    const screen = new T.MeshStandardMaterial({ color: 0x0a0a0c, roughness: 0.12, metalness: 0.4 });
+    const stripe = new T.MeshStandardMaterial({ map: this._stripeTex(T), roughness: 0.9 });
+    const rugM = new T.MeshStandardMaterial({ map: this._rugTex(T), roughness: 0.95 });
+    const white = new T.MeshStandardMaterial({ color: 0xf1efe9, roughness: 0.4 });
+    const oak = new T.MeshStandardMaterial({ color: 0xc79c63, roughness: 0.5 });
+    const dark = new T.MeshStandardMaterial({ color: 0x2a2622, roughness: 0.85 });
+    const metal = new T.MeshStandardMaterial({ color: 0x9a9a9a, roughness: 0.3, metalness: 0.7 });
+    const linen = new T.MeshStandardMaterial({ color: 0xd9cfbc, roughness: 0.95 });
+    const beige = new T.MeshStandardMaterial({ color: 0xe4dccb, roughness: 0.9 });
+
+    const G = () => { const g = new T.Group(); g.visible = false; scene.add(g); return g; };
+    const gA = G(), gB = G(), gC = G(), gD = G();
+    this.lay = { A: gA, B: gB, C: gC, D: gD };
+
+    const bx = (g, mat, sx, sy, sz, x, y, z) => {
+      const me = new T.Mesh(new T.BoxGeometry(sx, sy, sz), mat);
+      me.position.set(x, y, z); me.castShadow = true; me.receiveShadow = true;
+      g.add(me); return me;
+    };
+    const cy = (g, mat, r1, r2, h, x, y, z) => {
+      const me = new T.Mesh(new T.CylinderGeometry(r1, r2, h, 20), mat);
+      me.position.set(x, y, z); me.castShadow = true; me.receiveShadow = true;
+      g.add(me); return me;
+    };
+    const sub = (g, x, z, ry) => {
+      const s = new T.Group(); s.position.set(x, 0, z); s.rotation.y = ry || 0;
+      g.add(s); return s;
+    };
+
+    // pantalla mira hacia +x local
+    const tvUnit = (g, x, z, ry) => {
+      const s = sub(g, x, z, ry);
+      bx(s, black, 0.40, 0.40, 1.80, 0, 0.20, 0);
+      bx(s, black, 0.06, 0.05, 0.5, 0.01, 0.425, -0.44);
+      bx(s, black, 0.06, 0.05, 0.5, 0.01, 0.425, 0.44);
+      bx(s, screen, 0.035, 0.71, 1.23, 0.01, 0.81, 0);
+    };
+    // asiento mira hacia -x local
+    const sofa = (g, x, z, ry, chaise) => {
+      const s = sub(g, x, z, ry);
+      if (chaise) {
+        bx(s, stripe, 0.80, 0.34, 0.62, -0.72, 0.21, 0.46);
+        bx(s, stripe, 0.72, 0.14, 0.54, -0.74, 0.45, 0.46);
+      }
+      bx(s, stripe, 0.92, 0.34, 1.28, 0, 0.21, 0);
+      bx(s, stripe, 0.92, 0.62, 0.26, 0, 0.33, -0.77);
+      bx(s, stripe, 0.92, 0.62, 0.26, 0, 0.33, 0.77);
+      bx(s, stripe, 0.30, 0.55, 1.28, 0.31, 0.62, 0);
+      bx(s, stripe, 0.60, 0.16, 0.60, -0.12, 0.46, -0.32);
+      bx(s, stripe, 0.60, 0.16, 0.60, -0.12, 0.46, 0.32);
+      bx(s, stripe, 0.16, 0.42, 0.58, 0.18, 0.72, -0.32);
+      bx(s, stripe, 0.16, 0.42, 0.58, 0.18, 0.72, 0.32);
+    };
+    const rug = (g, x, z, ry) => {
+      const s = sub(g, x, z, ry);
+      const me = new T.Mesh(new T.PlaneGeometry(1.40, 1.40), rugM);
+      me.rotation.x = -Math.PI / 2; me.position.y = 0.006; me.receiveShadow = true;
+      s.add(me);
+    };
+    // usuario sentado en -x local, mirando +x
+    const chair = (g, x, z, ry) => {
+      const s = sub(g, x, z, ry);
+      cy(s, black, 0.30, 0.32, 0.04, 0, 0.03, 0);
+      bx(s, black, 0.04, 0.36, 0.04, 0, 0.24, 0);
+      bx(s, black, 0.48, 0.07, 0.48, 0, 0.47, 0);
+      bx(s, black, 0.07, 0.52, 0.46, -0.24, 0.80, 0);
+    };
+    // escritorio nogal 1,75×0,65, monitor mirando -x local
+    const deskW = (g, x, z, ry) => {
+      const s = sub(g, x, z, ry);
+      bx(s, walnut, 0.65, 0.035, 1.75, 0, 0.735, 0);
+      [[-0.29, -0.825], [0.29, -0.825], [-0.29, 0.825], [0.29, 0.825]]
+        .forEach(p => bx(s, black, 0.05, 0.72, 0.05, p[0], 0.36, p[1]));
+      cy(s, whiteM, 0.10, 0.10, 0.015, 0.22, 0.76, 0);
+      bx(s, whiteM, 0.03, 0.14, 0.03, 0.22, 0.83, 0);
+      bx(s, whiteM, 0.025, 0.34, 0.55, 0.23, 1.02, 0);
+      bx(s, screen, 0.01, 0.30, 0.51, 0.215, 1.02, 0);
+    };
+    // escritorio negro 1,80×0,80 (largo en z local)
+    const deskB = (g, x, z, ry) => {
+      const s = sub(g, x, z, ry);
+      bx(s, black, 0.80, 0.035, 1.80, 0, 0.735, 0);
+      [[-0.35, -0.85], [0.35, -0.85], [-0.35, 0.85], [0.35, 0.85]]
+        .forEach(p => bx(s, black, 0.05, 0.72, 0.05, p[0], 0.36, p[1]));
+    };
+    // almacenamiento a lo largo del murete (x1→x2, murete en z0, dir hacia el interior)
+    const aparador = (g, x1, x2, z0, dir) => {
+      const len = x2 - x1, cx = (x1 + x2) / 2, zp = d => z0 + dir * d;
+      bx(g, dark, len - 0.10, 0.06, 0.37, cx, 0.03, zp(0.225));
+      bx(g, white, len, 0.79, 0.45, cx, 0.455, zp(0.225));
+      bx(g, oak, len + 0.04, 0.03, 0.49, cx, 0.865, zp(0.245));
+      let x = x1 + 0.02, i = 0;
+      const pat = ['doors', 'drawers', 'open'];
+      while (x + 0.5 < x2) {
+        const kind = pat[i % 3];
+        const w = Math.min(kind === 'doors' ? 0.9 : 0.6, x2 - 0.02 - x);
+        const mx = x + w / 2;
+        if (kind === 'open') {
+          bx(g, dark, w - 0.04, 0.63, 0.40, mx, 0.48, zp(0.24));
+          bx(g, white, w - 0.06, 0.02, 0.38, mx, 0.48, zp(0.24));
+          bx(g, beige, 0.22, 0.19, 0.30, mx - 0.13, 0.28, zp(0.26));
+          bx(g, beige, 0.22, 0.19, 0.30, mx + 0.13, 0.28, zp(0.26));
+        } else if (kind === 'doors') {
+          bx(g, white, w / 2 - 0.02, 0.71, 0.012, mx - w / 4, 0.475, zp(0.456));
+          bx(g, white, w / 2 - 0.02, 0.71, 0.012, mx + w / 4, 0.475, zp(0.456));
+          bx(g, metal, 0.10, 0.018, 0.012, mx - 0.07, 0.76, zp(0.466));
+          bx(g, metal, 0.10, 0.018, 0.012, mx + 0.07, 0.76, zp(0.466));
+        } else {
+          [0.20, 0.455, 0.71].forEach(y => {
+            bx(g, white, w - 0.03, 0.22, 0.012, mx, y, zp(0.456));
+            bx(g, metal, 0.10, 0.018, 0.012, mx, y + 0.07, zp(0.466));
+          });
+        }
+        x += w + 0.004; i++;
+      }
+    };
+    const arcon = (g, x1, x2, z0, dir, cojines) => {
+      const len = x2 - x1, cx = (x1 + x2) / 2, zp = d => z0 + dir * d;
+      bx(g, dark, len - 0.10, 0.05, 0.42, cx, 0.025, zp(0.25));
+      bx(g, white, len, 0.34, 0.50, cx, 0.25, zp(0.25));
+      bx(g, oak, len + 0.04, 0.04, 0.54, cx, 0.44, zp(0.27));
+      for (let sx = x1 + 0.8; sx < x2 - 0.1; sx += 0.8) {
+        bx(g, dark, 0.008, 0.30, 0.012, sx, 0.25, zp(0.506));
+      }
+      if (cojines !== false) {
+        if (len > 1.4) bx(g, linen, 0.62, 0.07, 0.42, x1 + 0.85, 0.495, zp(0.25));
+        if (len > 2.3) bx(g, linen, 0.62, 0.07, 0.42, x1 + 1.75, 0.495, zp(0.25));
+      }
+    };
+
+    // ---- A · actual (máster, almacenaje mixto)
+    tvUnit(gA, 0.32, 3.99, 0);
+    rug(gA, 2.28, 5.77, -0.30);
+    sofa(gA, 3.67, 6.20, -0.30);
+    deskW(gA, 6.075, 1.06, 0);
+    chair(gA, 5.49, 1.06, 0);
+    const d2a = sub(gA, 4.63, 6.50, -0.30);
+    bx(d2a, black, 0.80, 0.035, 1.80, 0, 0.735, 0);
+    [[-0.35, -0.85], [0.35, -0.85], [-0.35, 0.85], [0.35, 0.85]]
+      .forEach(p => bx(d2a, black, 0.05, 0.72, 0.05, p[0], 0.36, p[1]));
+    cy(d2a, black, 0.30, 0.32, 0.04, 0.65, 0.03, 0);
+    bx(d2a, black, 0.04, 0.36, 0.04, 0.65, 0.24, 0);
+    bx(d2a, black, 0.48, 0.07, 0.48, 0.65, 0.47, 0);
+    bx(d2a, black, 0.07, 0.52, 0.46, 0.89, 0.80, 0);
+
+
+    // ---- B · estudio en isla
+    tvUnit(gB, 0.32, 3.99, 0);
+    rug(gB, 1.80, 3.60, 0);
+    sofa(gB, 2.85, 1.70, 0.75);
+    const butaca = (g, x, z, ry) => {
+      const s = sub(g, x, z, ry);
+      bx(s, linen, 0.80, 0.24, 0.80, 0, 0.17, 0);
+      bx(s, linen, 0.62, 0.13, 0.60, -0.05, 0.35, 0);
+      bx(s, linen, 0.26, 0.46, 0.66, 0.30, 0.52, 0);
+      bx(s, linen, 0.74, 0.20, 0.12, 0, 0.39, -0.37);
+      bx(s, linen, 0.74, 0.20, 0.12, 0, 0.39, 0.37);
+    };
+    butaca(gB, 2.80, 4.60, -0.25);
+    // isla: tableros volados a 0,74 desde el murete (esc 2 negro + esc 1 nogal bajo el Velux)
+    bx(gB, black, 0.75, 0.035, 2.46, 3.875, 0.7375, 6.75);
+    bx(gB, walnut, 0.65, 0.035, 2.46, 4.575, 0.7375, 6.75);
+    bx(gB, metal, 0.04, 0.72, 0.04, 3.875, 0.36, 5.56);
+    bx(gB, metal, 0.04, 0.72, 0.04, 4.575, 0.36, 5.56);
+    cy(gB, whiteM, 0.10, 0.10, 0.015, 4.45, 0.765, 6.78);
+    bx(gB, whiteM, 0.03, 0.14, 0.03, 4.45, 0.835, 6.78);
+    bx(gB, whiteM, 0.025, 0.34, 0.55, 4.44, 1.03, 6.78);
+    bx(gB, screen, 0.01, 0.30, 0.51, 4.457, 1.03, 6.78);
+    chair(gB, 3.00, 6.75, 0);
+    chair(gB, 5.45, 6.75, Math.PI);
+
+    // ---- C · cine simétrico
+    tvUnit(gC, 0.32, 3.99, 0);
+    rug(gC, 1.75, 3.99, 0);
+    sofa(gC, 2.95, 3.99, 0);
+    butaca(gC, 1.95, 2.35, 0.79);
+    butaca(gC, 1.95, 5.63, -0.79);
+    deskW(gC, 6.075, 1.06, 0);
+    chair(gC, 5.49, 1.06, 0);
+    deskB(gC, 4.17, 6.30, -0.45);
+    chair(gC, 4.73, 6.57, Math.PI - 0.45);
+
+    // ---- D · salón bajo el Velux (TV en el hastial de la escalera)
+    tvUnit(gD, 6.08, 6.78, Math.PI);
+    rug(gD, 5.05, 6.35, 0);
+    // sofá en L: arranca donde acaba el almacenamiento del murete (x=3,40)
+    bx(gD, linen, 0.92, 0.34, 2.28, 3.36, 0.21, 6.84);
+    bx(gD, linen, 0.28, 0.60, 2.28, 3.04, 0.55, 6.84);
+    bx(gD, linen, 0.92, 0.50, 0.26, 3.36, 0.31, 5.83);
+    bx(gD, linen, 1.36, 0.34, 0.92, 4.50, 0.21, 7.52);
+    bx(gD, linen, 0.26, 0.50, 0.92, 5.05, 0.31, 7.52);
+    bx(gD, linen, 0.60, 0.16, 0.62, 3.50, 0.42, 6.35);
+    bx(gD, linen, 0.60, 0.16, 0.62, 3.50, 0.42, 7.05);
+    bx(gD, linen, 0.16, 0.42, 0.58, 3.26, 0.72, 6.35);
+    bx(gD, linen, 0.16, 0.42, 0.58, 3.26, 0.72, 7.05);
+    bx(gD, linen, 0.52, 0.16, 0.60, 4.10, 0.42, 7.42);
+    bx(gD, linen, 0.52, 0.16, 0.60, 4.66, 0.42, 7.42);
+    bx(gD, linen, 0.52, 0.42, 0.16, 4.10, 0.72, 7.86);
+    bx(gD, linen, 0.52, 0.42, 0.16, 4.66, 0.72, 7.86);
+    // esquina
+    bx(gD, linen, 0.60, 0.16, 0.62, 3.50, 0.42, 7.50);
+    bx(gD, linen, 0.16, 0.42, 0.58, 3.26, 0.72, 7.55);
+    bx(gD, linen, 0.44, 0.42, 0.16, 3.56, 0.72, 7.86);
+    // isla de escritorios enfrentados entre las ventanas
+    deskW(gD, 1.30, 3.67, -Math.PI / 2);
+    chair(gD, 1.30, 3.05, -Math.PI / 2);
+    deskB(gD, 1.30, 4.39, -Math.PI / 2);
+    chair(gD, 1.30, 5.01, Math.PI / 2);
+
+    // ---- juegos de almacenamiento por distribución (Ninguno / A / B / C mixto)
+    const storSet = (g, runs, mix) => {
+      const mk = () => { const s = new T.Group(); g.add(s); return s; };
+      const sN = mk(), sA = mk(), sB = mk(), sC = mk();
+      runs.forEach(r => { aparador(sA, r[0], r[1], r[2], r[3]); arcon(sB, r[0], r[1], r[2], r[3]); });
+      mix.forEach(p => { (p[4] === 'ap' ? aparador : arcon)(sC, p[0], p[1], p[2], p[3]); });
+      return { Ninguno: sN, A: sA, B: sB, C: sC };
+    };
+    this.storSets = {
+      A: storSet(gA, [[0.15, 5.60, 0.02, 1], [0.15, 6.25, 7.96, -1]],
+        [[0.15, 3.55, 0.02, 1, 'ap'], [3.55, 5.60, 0.02, 1, 'ar'], [0.15, 3.15, 7.96, -1, 'ar'], [3.15, 6.25, 7.96, -1, 'ap']]),
+      B: storSet(gB, [[0.15, 3.45, 7.96, -1], [4.95, 6.25, 7.96, -1], [0.15, 5.85, 0.02, 1]],
+        [[0.15, 3.45, 7.96, -1, 'ap'], [4.95, 6.25, 7.96, -1, 'ar'], [0.15, 5.85, 0.02, 1, 'ar']]),
+      C: storSet(gC, [[0.15, 5.55, 0.02, 1], [0.15, 5.40, 7.96, -1]],
+        [[0.15, 3.20, 0.02, 1, 'ap'], [3.20, 5.55, 0.02, 1, 'ar'], [0.15, 2.70, 7.96, -1, 'ar'], [2.70, 5.40, 7.96, -1, 'ap']]),
+      D: storSet(gD, [[0.15, 5.85, 0.02, 1], [0.15, 2.90, 7.96, -1]],
+        [[0.15, 3.00, 0.02, 1, 'ap'], [3.00, 5.85, 0.02, 1, 'ar'], [0.15, 2.90, 7.96, -1, 'ap']]),
+    };
+    // B: tramo en L contra el hastial opuesto (tramo 2,12), girado 90°
+    const gw = p => { const s = new T.Group(); s.position.set(6.38, 0, 0); s.rotation.y = -Math.PI / 2; p.add(s); return s; };
+    const gwA = gw(this.storSets.B.A), gwB = gw(this.storSets.B.B), gwC = gw(this.storSets.B.C);
+    aparador(gwA, 0.10, 2.02, 0.02, 1); aparador(gwA, 5.60, 7.45, 0.02, 1);
+    arcon(gwB, 0.10, 2.02, 0.02, 1); arcon(gwB, 5.60, 7.45, 0.02, 1);
+    aparador(gwC, 0.10, 2.02, 0.02, 1); arcon(gwC, 5.60, 7.45, 0.02, 1);
+    // estantería de tablas de roble en el paño sobre el tramo 1,85 (escalonada bajo el faldón)
+    const shelfWall = g => {
+      bx(g, oak, 1.82, 0.028, 0.30, 6.51, 1.02, 0.19);
+      [[5.62, 2.35], [6.22, 2.05], [6.82, 1.66], [7.42, 1.30]].forEach(p =>
+        bx(g, oak, 0.028, p[1] - 1.00, 0.30, p[0], (p[1] + 1.00) / 2, 0.19));
+      [[1.30, 7.40], [1.65, 6.86], [2.00, 6.31], [2.30, 5.84]].forEach(s =>
+        bx(g, oak, s[1] - 5.60, 0.028, 0.30, (5.60 + s[1]) / 2, s[0], 0.19));
+    };
+    shelfWall(gwA); shelfWall(gwB); shelfWall(gwC);
+    // A · actual: mismo tramo en L + estantería en el lado del escritorio negro
+    const awA = gw(this.storSets.A.A), awB = gw(this.storSets.A.B), awC = gw(this.storSets.A.C);
+    aparador(awA, 5.60, 7.45, 0.02, 1); arcon(awB, 5.60, 7.45, 0.02, 1); arcon(awC, 5.60, 7.45, 0.02, 1);
+    shelfWall(awA); shelfWall(awB); shelfWall(awC);
+    // D · tramo en L + estantería en el hastial de la escalera (tramo 2,12; alturas crecen con z)
+    const shelfWall2 = g => {
+      bx(g, oak, 1.82, 0.028, 0.30, 1.11, 1.02, 0.19);
+      [[0.62, 1.32], [1.20, 1.68], [1.78, 2.05]].forEach(p =>
+        bx(g, oak, 0.028, p[1] - 1.00, 0.30, p[0], (p[1] + 1.00) / 2, 0.19));
+      [[1.30, 0.62], [1.65, 1.20]].forEach(s =>
+        bx(g, oak, 2.02 - s[1], 0.028, 0.30, (s[1] + 2.02) / 2, s[0], 0.19));
+    };
+    // C · tramo en L + estantería detrás del escritorio negro
+    const cwA = gw(this.storSets.C.A), cwB = gw(this.storSets.C.B), cwC = gw(this.storSets.C.C);
+    aparador(cwA, 5.60, 7.45, 0.02, 1); arcon(cwB, 5.60, 7.45, 0.02, 1); arcon(cwC, 5.60, 7.45, 0.02, 1);
+    shelfWall(cwA); shelfWall(cwB); shelfWall(cwC);
+    const dwA = gw(this.storSets.D.A), dwB = gw(this.storSets.D.B), dwC = gw(this.storSets.D.C);
+    aparador(dwA, 0.10, 2.02, 0.02, 1); arcon(dwB, 0.10, 2.02, 0.02, 1); arcon(dwC, 0.10, 2.02, 0.02, 1);
+    shelfWall2(dwA); shelfWall2(dwB); shelfWall2(dwC);
+  }
+
+  _applyWood(tone) {
+    this._wood = tone;
+    const T = window.THREE;
+    (this.floorPieces || []).forEach(p => {
+      const old = p.mat.map;
+      p.mat.map = this._woodTex(T, p.sx / 4, p.sz / 2.1, tone);
+      p.mat.needsUpdate = true;
+      if (old) old.dispose();
+    });
+  }
+
+  _applyMode(mode) {
+    this._mode = mode;
+    const T = window.THREE;
+    const set = (hemiI, hemiSky, hemiGnd, sunI, sunC, sunPos, bulbI, bg, skyC) => {
+      this.hemi.intensity = hemiI;
+      this.hemi.color.set(hemiSky); this.hemi.groundColor.set(hemiGnd);
+      this.sun.intensity = sunI; this.sun.color.set(sunC);
+      this.sun.position.set(sunPos[0], sunPos[1], sunPos[2]);
+      this.bulbs.forEach(b => { b.intensity = bulbI; });
+      this.scene.background = new T.Color(bg);
+      this.skyMat.color.set(skyC);
+    };
+    if (mode === 'Atardecer') set(0.45, 0xead9c8, 0x8a6a4a, 1.7, 0xffb070, [-7, 2.2, 4.5], 0.5, 0xd9cec2, 0xf3d7b4);
+    else if (mode === 'Noche') set(0.18, 0x2c3a52, 0x1c1712, 0, 0xffffff, [-6.5, 6.5, 1.8], 1.15, 0x151a22, 0x1c2531);
+    else set(0.85, 0xe8f0f8, 0x9a7c5c, 1.5, 0xfff1da, [-6.5, 6.5, 1.8], 0.12, 0xe3e0d9, 0xf4f8fc);
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this._t);
+    cancelAnimationFrame(this._raf);
+    if (this.ro) this.ro.disconnect();
+    if (this.renderer) { this.renderer.dispose(); this.renderer.domElement.remove(); }
+  }
+}
+</script>
+</body>
+</html>
